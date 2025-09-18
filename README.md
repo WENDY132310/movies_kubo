@@ -1,76 +1,229 @@
-# Backend API
+# Movies Kubo API
 
-Este es el backend de una API para la gestión de usuarios, películas y categorías de películas. El proyecto está construido con Node.js, Express y Sequelize.
+Este proyecto es un **backend REST API** para la gestión de usuarios, películas y categorías de películas. Está construido con **Node.js**, **Express** y **Sequelize** como ORM para bases de datos SQL.
+
+## Características
+
+- Registro y autenticación de usuarios (JWT)
+- CRUD de películas y categorías
+- Filtrado y paginación de películas
+- Marcar películas como vistas por usuarios
+- Gestión de novedades (películas recientes)
+- Contenedores Docker para fácil despliegue
 
 ## Estructura del Proyecto
 
+```
+📂 backend-api
+│── 📂 src
+│   ├── 📂 config          # Configuración de BD y variables
+│   ├── 📂 models          # Modelos Sequelize: Usuario, Película, Categoría, UserMovie
+│   ├── 📂 routes          # Endpoints REST: usuarios, películas, categorías
+│   ├── 📂 controllers     # Lógica de negocio por recurso
+│   ├── 📂 middleware      # Autenticación y permisos (JWT)
+│   ├── 📂 utils           # Utilidades JWT y validaciones
+│   ├── 📝 app.js          # Configuración Express
+│   ├── 📝 server.js       # Inicio del servidor y conexión BD
+│── 📝 .env                # Variables de entorno (no subir)
+│── 📝 package.json        # Dependencias y scripts Node.js
+│── 📝 Dockerfile          # Imagen Docker backend
+│── 📝 docker-compose.yml  # Orquestación con PostgreSQL
+│── 📝 README.md           # Documentación del proyecto
+│── 📝 postman_collection.json # Pruebas en Postman
+```
 
-📂 backend-api (carpeta raíz del proyecto)
-│── 📂 src (código fuente principal)
-│ ├── 📂 config (configuración del proyecto, DB, etc.)
-│ │ ├── 📝 database.js (configuración de Sequelize y conexión a la BD)
-│ ├── 📂 models (modelos de la base de datos con Sequelize)
-│ │ ├── 📝 index.js (relaciones entre modelos y exportación)
-│ │ ├── 📝 user.model.js (modelo de usuario)
-│ │ ├── 📝 category.model.js (modelo de categoría de películas)
-│ │ ├── 📝 movie.model.js (modelo de película)
-│ │ ├── 📝 userMovie.model.js (modelo intermedio entre usuario y película vista)
-│ ├── 📂 routes (definición de endpoints)
-│ │ ├── 📝 user.routes.js (rutas para usuarios: registro y login)
-│ │ ├── 📝 movie.routes.js (rutas para películas: CRUD y filtrado)
-│ │ ├── 📝 category.routes.js (rutas para categorías de películas)
-│ ├── 📂 controllers (controladores que manejan la lógica de cada endpoint)
-│ │ ├── 📝 user.controller.js (controlador de usuarios)
-│ │ ├── 📝 movie.controller.js (controlador de películas)
-│ │ ├── 📝 category.controller.js (controlador de categorías)
-│ ├── 📂 middleware (middlewares para autenticación, permisos, etc.)
-│ │ ├── 📝 auth.middleware.js (middleware para proteger rutas con JWT)
-│ ├── 📂 utils (utilidades auxiliares como JWT o validaciones)
-│ │ ├── 📝 jwt.js (gestión de tokens JWT)
-│ ├── 📝 app.js (configuración principal del servidor Express)
-│ ├── 📝 server.js (punto de entrada para iniciar el servidor y conectar a la BD)
-│
-│── 📝 .env (archivo de configuración con variables de entorno)
-│── 📝 package.json (gestión de dependencias y scripts de Node.js)
-│── 📝 Dockerfile (archivo para crear la imagen Docker del backend)
-│── 📝 docker-compose.yml (orquestación de contenedores con PostgreSQL y la API)
-│── 📝 README.md (documentación del proyecto)
-│── 📝 postman_collection.json (colección de pruebas en Postman)
+## Base de datos
 
+Utiliza **PostgreSQL** (por defecto, configurable). Las tablas principales son:
 
-# Clonar el repositorio
-git clone <URL_DEL_REPOSITORIO>
-cd backend-api
+- **User:**  
+  - `id` (PK, auto-incremental)  
+  - `name` (string)  
+  - `email` (string, único)  
+  - `password` (string, encriptado)
 
-## Instala las dependencias
-npm install
-Configura las variables de entorno en el archivo .env.
-Inicia el servidor:
-npm start
+- **Movie:**  
+  - `id` (PK, auto-incremental)  
+  - `title` (string)  
+  - `releaseDate` (date)  
+  - `CategoryId` (FK a Category)
 
-## Uso
-Endpoints
-Usuarios
+- **Category:**  
+  - `id` (PK, auto-incremental)  
+  - `name` (string)
 
-Registro: POST /api/users/register
-Login: POST /api/users/login
-Películas
+- **UserMovie:** (relación para marcar películas vistas)  
+  - `id` (PK, auto-incremental)  
+  - `UserId` (FK a User)  
+  - `MovieId` (FK a Movie)
 
-Crear: POST /api/movies
-Leer: GET /api/movies
-Actualizar: PUT /api/movies/:id
-Eliminar: DELETE /api/movies/:id
-Categorías
+**Relaciones:**  
+- Un usuario puede marcar varias películas como vistas (UserMovie).
+- Una película pertenece a una categoría.
 
-Crear: POST /api/categories
-Leer: GET /api/categories
-Actualizar: PUT /api/categories/:id
-Eliminar: DELETE /api/categories/:id
+## Instalación
+
+1. Clona el repositorio:
+
+   ```bash
+   git clone https://github.com/WENDY132310/movies_kubo.git
+   cd movies_kubo
+   ```
+
+2. Instala dependencias:
+
+   ```bash
+   npm install
+   ```
+
+3. Configura el archivo `.env` con tus datos de base de datos y JWT:
+
+   ```
+   DB_HOST=localhost
+   DB_USER=tu_usuario
+   DB_PASSWORD=tu_contraseña
+   DB_NAME=movies_db
+   DB_DIALECT=postgres
+   JWT_SECRET=tu_secreto
+   ```
+
+4. Inicia el servidor:
+
+   ```bash
+   npm start
+   ```
+
+## Uso de la API
+
+### Usuarios
+
+- **Registro:** `POST /api/users/register`
+- **Login:** `POST /api/users/login`
+
+### Películas
+
+- **Crear:** `POST /api/movies`
+- **Listar:** `GET /api/movies`
+- **Actualizar:** `PUT /api/movies/:id`
+- **Eliminar:** `DELETE /api/movies/:id`
+- **Novedades:** `GET /api/movies/news`
+- **Marcar como vista:** `POST /api/movies/:id/view` *(requiere JWT)*
+
+### Categorías
+
+- **Crear:** `POST /api/categories`
+- **Listar:** `GET /api/categories`
+- **Actualizar:** `PUT /api/categories/:id`
+- **Eliminar:** `DELETE /api/categories/:id`
+
+## Ejemplo de petición y respuesta
+
+### Registro de usuario
+
+**Petición:**  
+```http
+POST /api/users/register
+Content-Type: application/json
+
+{
+  "name": "Ana",
+  "email": "ana@mail.com",
+  "password": "123456"
+}
+```
+
+**Respuesta:**  
+```json
+{
+  "id": 1,
+  "name": "Ana",
+  "email": "ana@mail.com",
+  "password": "$2a$10$..."
+}
+```
+
+### Login de usuario
+
+**Petición:**  
+```http
+POST /api/users/login
+Content-Type: application/json
+
+{
+  "email": "ana@mail.com",
+  "password": "123456"
+}
+```
+
+**Respuesta:**  
+```json
+{
+  "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+}
+```
+
+### Crear película
+
+**Petición:**  
+```http
+POST /api/movies
+Content-Type: application/json
+
+{
+  "title": "Matrix",
+  "releaseDate": "1999-03-31",
+  "categoryId": 2
+}
+```
+
+**Respuesta:**  
+```json
+{
+  "id": 1,
+  "title": "Matrix",
+  "releaseDate": "1999-03-31T00:00:00.000Z",
+  "CategoryId": 2
+}
+```
+
+### Listar películas
+
+**Petición:**  
+```http
+GET /api/movies
+```
+
+**Respuesta:**  
+```json
+{
+  "total": 1,
+  "pages": 1,
+  "movies": [
+    {
+      "id": 1,
+      "title": "Matrix",
+      "releaseDate": "1999-03-31T00:00:00.000Z",
+      "Category": { "id": 2, "name": "Acción" }
+    }
+  ]
+}
+```
 
 ## Docker
 
-construye una imagen
-docker build -t backend-api .
-inicia los contenedores
-docker-compose up
+1. Construye la imagen:
+
+   ```bash
+   docker build -t backend-api .
+   ```
+
+2. Inicia los contenedores (API + PostgreSQL):
+
+   ```bash
+   docker-compose up
+   ```
+
+## Pruebas
+
+Incluye una colección de Postman en `postman_collection.json` para probar todos los endpoints fácilmente.
 
